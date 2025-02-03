@@ -43,7 +43,10 @@ class ChatViewProvider implements vscode.WebviewViewProvider {
             const response = await fetch('http://localhost:11434/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ model: "deepseek-r1:1.5b", prompt }),
+                body: JSON.stringify({ 
+                    model: "deepseek-r1:1.5b", 
+                    prompt
+                }),
             });
 
             const text = await response.text();
@@ -56,8 +59,11 @@ class ChatViewProvider implements vscode.WebviewViewProvider {
                 try {
                     const jsonResponse = JSON.parse(line);
                     if (jsonResponse.response) {
-                        const cleanResponse = jsonResponse.response.replace(/<\/?think>/g, '').trim();
+                        let cleanResponse = jsonResponse.response.trim();
                         if (!cleanResponse) continue;
+                        
+                        // Add line break after </think>
+                        cleanResponse = cleanResponse.replace('</think>', '</think>\n');
                         
                         if (!lastResponseEndsWithSpace && 
                             !cleanResponse.match(/^[.,!?;:]/) && 
