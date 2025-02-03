@@ -1,0 +1,60 @@
+{
+  "name": "deepseek-assistant",
+  "displayName": "DeepSeek Assistant",
+  "description": "VSCode extension to query DeepSeek via Ollama",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "deepseek-chat",
+          "title": "DeepSeek Chat",
+          "icon": "media/chat.svg"
+        }
+      ]
+    },
+    "views": {
+      "deepseek-chat": [
+        {
+          "type": "webview",
+          "id": "deepseek-chat-view",
+          "name": "Chat",
+          "contextualTitle": "DeepSeek Chat"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "deepseek.query",
+        "title": "Ask DeepSeek"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "yarn run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "yarn run compile && yarn run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.96.0",
+    "@typescript-eslint/eslint-plugin": "^8.22.0",
+    "@typescript-eslint/parser": "^8.22.0",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.4.1",
+    "eslint": "^9.19.0",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {}
+}
