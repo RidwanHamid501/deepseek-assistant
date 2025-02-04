@@ -1,4 +1,11 @@
 import * as vscode from 'vscode';
+import { marked } from 'marked';
+
+// Configure marked for safe rendering
+marked.setOptions({
+    breaks: true,
+    gfm: true
+});
 
 export function getWebviewContent(): string {
     return `<!DOCTYPE html>
@@ -43,6 +50,11 @@ export function getWebviewContent(): string {
                 border-radius: 8px;
                 margin: 4px 0;
             }
+            .message-content {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                margin: 0;
+            }
             .user-message {
                 align-self: flex-end;
                 background-color: var(--vscode-button-background);
@@ -57,10 +69,31 @@ export function getWebviewContent(): string {
                 margin-bottom: 4px;
                 opacity: 0.7;
             }
-            pre {
-                white-space: pre-wrap;
-                word-wrap: break-word;
-                margin: 0;
+            .think-block {
+                background-color: var(--vscode-textBlockQuote-background);
+                border-left: 3px solid var(--vscode-textBlockQuote-border);
+                padding: 8px;
+                margin: 8px 0;
+                font-style: italic;
+                opacity: 0.8;
+            }
+            code {
+                font-family: var(--vscode-editor-font-family);
+                background-color: var(--vscode-textCodeBlock-background);
+                padding: 2px 4px;
+                border-radius: 3px;
+            }
+            pre code {
+                display: block;
+                padding: 8px;
+                margin: 8px 0;
+                overflow-x: auto;
+            }
+            blockquote {
+                border-left: 3px solid var(--vscode-textBlockQuote-border);
+                margin: 0 0 0 8px;
+                padding-left: 8px;
+                color: var(--vscode-textBlockQuote-foreground);
             }
             #prompt-input {
                 width: 100%;
@@ -101,11 +134,18 @@ export function getWebviewContent(): string {
                         senderDiv.className = 'sender';
                         senderDiv.textContent = message.sender === 'user' ? 'You' : 'DeepSeek';
                         
-                        const contentPre = document.createElement('pre');
-                        contentPre.textContent = message.message;
+                        const contentDiv = document.createElement('div');
+                        contentDiv.className = 'message-content';
+                        // For user messages, just use text content
+                        if (message.sender === 'user') {
+                            contentDiv.textContent = message.message;
+                        } else {
+                            // For assistant messages, parse markdown and preserve think blocks
+                            contentDiv.innerHTML = message.message;
+                        }
                         
                         messageDiv.appendChild(senderDiv);
-                        messageDiv.appendChild(contentPre);
+                        messageDiv.appendChild(contentDiv);
                         chatContainer.appendChild(messageDiv);
                         
                         // Scroll to bottom

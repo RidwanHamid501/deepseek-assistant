@@ -46,6 +46,7 @@
     "test": "vscode-test"
   },
   "devDependencies": {
+    "@types/marked": "^6.0.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
     "@types/vscode": "^1.96.0",
@@ -56,5 +57,7 @@
     "eslint": "^9.19.0",
     "typescript": "^5.7.3"
   },
-  "dependencies": {}
+  "dependencies": {
+    "marked": "^15.0.6"
+  }
 }
