@@ -89,6 +89,44 @@ export function getWebviewContent(): string {
                 margin: 8px 0;
                 overflow-x: auto;
             }
+            .code-block-container {
+                position: relative;
+                margin: 8px 0;
+                border: 1px solid var(--vscode-input-border);
+                border-radius: 4px;
+                background-color: var(--vscode-textCodeBlock-background);
+            }
+            .code-block-header {
+                padding: 1px 8px;
+                border-bottom: 1px solid var(--vscode-input-border);
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                height: 16px;
+                background-color: var(--vscode-textCodeBlock-background);
+            }
+            .copy-button {
+                background: none;
+                border: none;
+                color: var(--vscode-button-foreground);
+                cursor: pointer;
+                padding: 2px;
+                font-size: 12px;
+                opacity: 0.7;
+            }
+            .copy-button:hover {
+                opacity: 1;
+            }
+            pre {
+                margin: 0;
+            }
+            pre code {
+                display: block;
+                padding: 12px;
+                margin: 0;
+                overflow-x: auto;
+                background-color: var(--vscode-textCodeBlock-background);
+            }
             blockquote {
                 border-left: 3px solid var(--vscode-textBlockQuote-border);
                 margin: 0 0 0 8px;
@@ -164,7 +202,31 @@ export function getWebviewContent(): string {
                     promptInput.value = '';
                 }
             });
+
+            // Copy code function
+            window.copyCode = (button) => {
+                const codeBlock = button.closest('.code-block-container').querySelector('code');
+                const code = codeBlock.textContent;
+                navigator.clipboard.writeText(code);
+                
+                // Show feedback
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.opacity = '1';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.opacity = '0.7';
+                }, 1500);
+            };
         </script>
     </body>
     </html>`;
-} 
+}
+
+function addCopyButtons(html: string): string {
+    return html.replace(
+        /<pre><code(.*?)>([\s\S]*?)<\/code><\/pre>/g,
+        '<div class="code-block-container"><div class="code-block-header"><button class="copy-button" onclick="copyCode(this)">📋</button></div><pre><code$1>$2</code></pre></div>'
+    );
+}
