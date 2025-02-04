@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { ModelConfig, defaultConfig, buildPrompt } from '../config/prompts';
 
 export async function handleDeepSeekResponse(response: Response): Promise<string> {
     const text = await response.text();
@@ -34,13 +35,16 @@ export async function handleDeepSeekResponse(response: Response): Promise<string
     return fullResponse;
 }
 
-export async function sendMessageToDeepSeek(prompt: string): Promise<Response> {
+export async function sendMessageToDeepSeek(prompt: string, config: ModelConfig = defaultConfig): Promise<Response> {
+    const fullPrompt = buildPrompt(prompt, config);
+    
     return fetch('http://localhost:11434/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-            model: "deepseek-r1:1.5b", 
-            prompt
+            model: config.model,
+            prompt: fullPrompt,
+            temperature: config.temperature
         }),
     });
 } 
