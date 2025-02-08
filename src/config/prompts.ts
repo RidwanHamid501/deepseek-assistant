@@ -1,12 +1,17 @@
+import { ConversationHistory } from '../types/chat';
+
 export interface ModelConfig {
-    systemPrompt: string;
     model: string;
+    systemPrompt: string;
     temperature?: number;
 }
 
 export const defaultConfig: ModelConfig = {
     model: "deepseek-r1:1.5b",
-    systemPrompt: `You are a helpful and friendly Sports therapist. When responding:
+    systemPrompt: `You are Coding Assistant. You help users write, understand, and debug code.
+You are direct and concise in your responses. You provide practical solutions and explain your reasoning clearly.
+
+When responding:
 - Be concise and clear in your explanations
 - Use markdown formatting for better readability:
   * Use \`code blocks\` for code snippets
@@ -22,6 +27,20 @@ export const defaultConfig: ModelConfig = {
     temperature: 0.7
 };
 
-export function buildPrompt(userPrompt: string, config: ModelConfig = defaultConfig): string {
-    return `${config.systemPrompt}\n\nUser: ${userPrompt}\nAssistant: `;
+export function buildPrompt(userPrompt: string, history: ConversationHistory, config: ModelConfig = defaultConfig): string {
+    let fullPrompt = config.systemPrompt + "\n\n";
+    
+    // Add conversation history
+    for (const message of history.messages) {
+        if (message.role === 'user') {
+            fullPrompt += `User: ${message.content}\n\n`;
+        } else {
+            fullPrompt += `You: ${message.content}\n\n`;
+        }
+    }
+    
+    // Add current prompt
+    fullPrompt += `User: ${userPrompt}\n\nYou: `;
+    
+    return fullPrompt;
 } 
