@@ -10,6 +10,13 @@ marked.setOptions({
 // Remove custom renderer and just use marked's default renderer
 // This will still handle code blocks properly while avoiding type issues
 
+function addCopyButtons(html: string): string {
+    return html.replace(
+        /<pre><code(.*?)>([\s\S]*?)<\/code><\/pre>/g,
+        '<div class="code-block-container"><div class="code-block-header"><button class="copy-button" onclick="copyCode(this)">📋</button></div><pre><code$1>$2</code></pre></div>'
+    );
+}
+
 export async function handleResponse(response: Response): Promise<string> {
     const text = await response.text();
     const lines = text.split('\n').filter(line => line.trim());
@@ -28,7 +35,8 @@ export async function handleResponse(response: Response): Promise<string> {
                 if (content.includes('<think>')) {
                     // Parse any accumulated markdown before the think block
                     if (markdownBuffer.trim()) {
-                        fullResponse += marked.parse(markdownBuffer.trim());
+                        const parsedMarkdown = marked.parse(markdownBuffer.trim());
+                        fullResponse += addCopyButtons(parsedMarkdown.toString());
                         markdownBuffer = '';
                     }
                     inThinkBlock = true;
@@ -55,7 +63,8 @@ export async function handleResponse(response: Response): Promise<string> {
 
     // Parse any remaining markdown content
     if (markdownBuffer.trim()) {
-        fullResponse += marked.parse(markdownBuffer.trim());
+        const parsedMarkdown = marked.parse(markdownBuffer.trim());
+        fullResponse += addCopyButtons(parsedMarkdown.toString());
     }
     
     return fullResponse;
