@@ -146,40 +146,79 @@ export function getWebviewContent(): string {
             #prompt-input:focus {
                 border-color: var(--vscode-focusBorder);
             }
+            .file-selector {
+                padding: 10px;
+                border-top: 1px solid var(--vscode-input-border);
+                display: flex;
+                gap: 10px;
+                align-items: center;
+            }
+            .file-selector select {
+                flex: 1;
+                padding: 4px;
+                background: var(--vscode-input-background);
+                color: var(--vscode-input-foreground);
+                border: 1px solid var(--vscode-input-border);
+                border-radius: 2px;
+            }
+            .file-selector button {
+                padding: 4px 8px;
+                background: var(--vscode-button-background);
+                color: var(--vscode-button-foreground);
+                border: none;
+                border-radius: 2px;
+                cursor: pointer;
+            }
+            .file-selector button:hover {
+                background: var(--vscode-button-hoverBackground);
+            }
         </style>
     </head>
     <body>
         <div class="container">
-            <div class="chat-container" id="chat"></div>
+            <div class="chat-container" id="chat-container"></div>
+            <div class="file-selector">
+                <select id="file-selector">
+                    <option value="">Select a file (optional)</option>
+                </select>
+                <button id="refresh-files">Refresh Files</button>
+            </div>
             <div class="input-container">
                 <input type="text" id="prompt-input" placeholder="Type your message..." />
             </div>
         </div>
         <script>
             const vscode = acquireVsCodeApi();
-            const chatContainer = document.getElementById('chat');
+            const chatContainer = document.getElementById('chat-container');
             const promptInput = document.getElementById('prompt-input');
+            const fileSelector = document.getElementById('file-selector');
+            const refreshFilesButton = document.getElementById('refresh-files');
 
-            // Handle messages
+            // Handle file refresh
+            refreshFilesButton.addEventListener('click', () => {
+                vscode.postMessage({ type: 'refreshFiles' });
+            });
+
+            // Handle messages from extension
             window.addEventListener('message', event => {
                 const message = event.data;
                 switch (message.type) {
                     case 'addMessage':
                         const messageDiv = document.createElement('div');
-                        messageDiv.className = 'message ' + (message.sender === 'user' ? 'user-message' : 'assistant-message');
+                        messageDiv.className = 'message ' + (message.role === 'user' ? 'user-message' : 'assistant-message');
                         
                         const senderDiv = document.createElement('div');
                         senderDiv.className = 'sender';
-                        senderDiv.textContent = message.sender === 'user' ? 'You' : 'DeepSeek';
+                        senderDiv.textContent = message.role === 'user' ? 'You' : 'DeepSeek';
                         
                         const contentDiv = document.createElement('div');
                         contentDiv.className = 'message-content';
                         // For user messages, just use text content
-                        if (message.sender === 'user') {
-                            contentDiv.textContent = message.message;
+                        if (message.role === 'user') {
+                            contentDiv.textContent = message.content;
                         } else {
                             // For assistant messages, parse markdown and preserve think blocks
-                            contentDiv.innerHTML = message.message;
+                            contentDiv.innerHTML = message.content;
                         }
                         
                         messageDiv.appendChild(senderDiv);
@@ -189,17 +228,36 @@ export function getWebviewContent(): string {
                         // Scroll to bottom
                         messageDiv.scrollIntoView({ behavior: 'smooth' });
                         break;
+                    case 'updateFiles':
+                        updateFileList(message.files);
+                        break;
                 }
             });
 
-            // Handle input
+            function updateFileList(files) {
+                fileSelector.innerHTML = '<option value="">Select a file (optional)</option>';
+                files.forEach(file => {
+                    const option = document.createElement('option');
+                    option.value = file;
+                    option.textContent = file;
+                    fileSelector.appendChild(option);
+                });
+            }
+
             promptInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && promptInput.value.trim()) {
-                    vscode.postMessage({
-                        type: 'prompt',
-                        value: promptInput.value.trim()
-                    });
-                    promptInput.value = '';
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    const message = promptInput.value.trim();
+                    const selectedFile = fileSelector.value;
+                    if (message) {
+                        vscode.postMessage({
+                            type: 'prompt',
+                            content: message,
+                            selectedFile: selectedFile
+                        });
+                        addMessage(message, 'user');
+                        promptInput.value = '';
+                    }
                 }
             });
 
