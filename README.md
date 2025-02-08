@@ -1,71 +1,97 @@
-# deepseek-assistant README
+# DeepSeek Assistant VSCode Extension
 
-This is the README for your extension "deepseek-assistant". After writing up a brief description, we recommend including the following sections.
+A Visual Studio Code extension that integrates DeepSeek AI into your development workflow. Chat with DeepSeek directly in VSCode, get help with your code, and analyze files in your workspace.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- 💬 Chat with DeepSeek AI directly within VSCode
+- 📁 Analyze files from your workspace
+- 💡 Get code explanations and suggestions
+- 📋 Easy code copying with built-in copy buttons
+- 🎨 Beautiful VS Code-themed interface
 
-For example if there is an image subfolder under your extension project workspace:
+## Prerequisites
 
-\!\[feature X\]\(images/feature-x.png\)
+1. Install [Ollama](https://ollama.ai)
+2. Pull the DeepSeek model:
+```bash
+ollama pull deepseek-r1:70b // 70b is the model size
+```
+3. Node.js (v14 or higher)
+4. VS Code (v1.60.0 or higher)
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+## Development Setup
 
-## Requirements
+This extension is currently in development and can only be run locally. Follow these steps to set it up:
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+1. Clone the repository:
+```bash
+git clone https://github.com/RidwanHamid501/deepseek-assistant.git
+cd deepseek-assistant
+```
 
-## Extension Settings
+2. Install dependencies:
+```bash
+npm install
+```
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+3. Open the project in VS Code:
+```bash
+code .
+```
 
-For example:
+4. Press F5 to start debugging, which will:
+   - Open a new VS Code window with the extension loaded
+   - Start the extension in development mode
 
-This extension contributes the following settings:
+Note: The extension is not yet available on the VS Code marketplace. You can only run it in development mode following the steps above.
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+## Usage
 
-## Known Issues
+### Starting a Chat
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+1. Click on the DeepSeek icon in the sidebar to open the chat panel
+2. Type your question or prompt in the input box at the bottom
+3. Press Enter to send your message
 
-## Release Notes
+### Working with Files
 
-Users appreciate release notes as you update your extension.
+1. Use the file selector dropdown above the chat input to choose a file from your workspace
+2. Click the "Refresh Files" button to update the file list if you've added new files
+3. With a file selected, any question you ask will include the file's content in the context
+4. DeepSeek will provide responses based on both your question and the selected file's content
 
-### 1.0.0
+### Code Blocks
 
-Initial release of ...
+- Code blocks in responses include copy buttons (📋) for easy copying
+- Click the copy button to copy the code to your clipboard
+- Code is formatted and syntax-highlighted for better readability
 
-### 1.0.1
+### Best Practices
 
-Fixed issue #.
+- Be specific in your questions
+- When asking about code, select the relevant file first
+- Use the file selector when you want DeepSeek to analyze or explain specific files
+- Clear the file selection when asking general questions
 
-### 1.1.0
+## Troubleshooting
 
-Added features X, Y, and Z.
+If you encounter issues:
 
----
+1. Ensure Ollama is running (`ollama serve`)
+2. Check that you have pulled the DeepSeek model (`ollama pull deepseek-r1:70b`)
+3. If you see "Failed to connect to DeepSeek" error, restart Ollama and try again
+4. Make sure you have an active workspace open in VS Code
+5. For development issues:
+   - Check the Debug Console in VS Code for errors
+   - Try running `npm run compile` to check for compilation errors
+   - Make sure all dependencies are installed correctly
 
-## Following extension guidelines
+## Contributing
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+## License
 
-## Working with Markdown
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
