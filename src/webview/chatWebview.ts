@@ -28,6 +28,7 @@ export function getWebviewContent(): string {
                 height: 100vh;
                 padding: 0;
                 margin: 0;
+                overflow: hidden;
             }
             .chat-container {
                 flex: 1;
@@ -37,10 +38,53 @@ export function getWebviewContent(): string {
                 flex-direction: column;
                 gap: 12px;
             }
-            .input-container {
-                padding: 10px;
+            .bottom-container {
+                flex-shrink: 0;
                 border-top: 1px solid var(--vscode-input-border);
                 background-color: var(--vscode-editor-background);
+            }
+            .input-container {
+                padding: 10px;
+                background-color: var(--vscode-editor-background);
+                position: relative;
+            }
+            .selected-file {
+                position: absolute;
+                left: 18px;
+                top: 18px;
+                background: var(--vscode-button-background);
+                color: var(--vscode-button-foreground);
+                padding: 2px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                z-index: 2;
+            }
+            .selected-file .remove {
+                cursor: pointer;
+                opacity: 0.8;
+            }
+            .selected-file .remove:hover {
+                opacity: 1;
+            }
+            .file-button {
+                position: absolute;
+                right: 20px;
+                top: 50%;
+                transform: translateY(-50%);
+                padding: 4px 8px;
+                background: var(--vscode-button-background);
+                color: var(--vscode-button-foreground);
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 12px;
+                z-index: 2;
+            }
+            .file-button:hover {
+                background: var(--vscode-button-hoverBackground);
             }
             .message {
                 display: flex;
@@ -136,55 +180,98 @@ export function getWebviewContent(): string {
             #prompt-input {
                 width: 100%;
                 padding: 8px;
+                padding-right: 100px;
+                padding-top: 32px;
                 border: 1px solid var(--vscode-input-border);
                 background-color: var(--vscode-input-background);
                 color: var(--vscode-input-foreground);
                 border-radius: 4px;
                 outline: none;
                 box-sizing: border-box;
+                min-height: 100px;
             }
             #prompt-input:focus {
                 border-color: var(--vscode-focusBorder);
             }
-            .file-selector {
-                padding: 10px;
-                border-top: 1px solid var(--vscode-input-border);
-                display: flex;
-                gap: 10px;
-                align-items: center;
-            }
-            .file-selector select {
-                flex: 1;
-                padding: 4px;
+            #file-selector {
+                display: none;
+                position: absolute;
+                right: 20px;
+                top: 0;
+                transform: translateY(-100%);
+                width: 400px;
+                max-height: 300px;
                 background: var(--vscode-input-background);
-                color: var(--vscode-input-foreground);
                 border: 1px solid var(--vscode-input-border);
-                border-radius: 2px;
+                border-radius: 4px;
+                z-index: 3;
             }
-            .file-selector button {
+            .file-search {
+                position: sticky;
+                top: 0;
+                padding: 8px;
+                background: var(--vscode-input-background);
+                border-bottom: 1px solid var(--vscode-input-border);
+            }
+            .file-search input {
+                width: calc(100% - 16px);
                 padding: 4px 8px;
-                background: var(--vscode-button-background);
-                color: var(--vscode-button-foreground);
-                border: none;
+                background: var(--vscode-input-background);
+                border: 1px solid var(--vscode-input-border);
+                color: white;
                 border-radius: 2px;
-                cursor: pointer;
+                outline: none;
+                box-sizing: border-box;
             }
-            .file-selector button:hover {
-                background: var(--vscode-button-hoverBackground);
+            .file-search input:focus {
+                border-color: var(--vscode-focusBorder);
+            }
+            .file-list {
+                overflow-y: auto;
+                max-height: 250px;
+            }
+            .file-option {
+                padding: 6px 8px;
+                cursor: pointer;
+                color: white;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 16px;
+            }
+            .file-option:hover {
+                background: var(--vscode-list-hoverBackground);
+            }
+            .file-name {
+                font-weight: 500;
+                white-space: nowrap;
+            }
+            .file-path {
+                opacity: 0.6;
+                font-size: 0.9em;
+                text-align: right;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="chat-container" id="chat-container"></div>
-            <div class="file-selector">
-                <select id="file-selector">
-                    <option value="">Select a file (optional)</option>
-                </select>
-                <button id="refresh-files">Refresh Files</button>
-            </div>
             <div class="input-container">
                 <input type="text" id="prompt-input" placeholder="Type your message..." />
+                <div id="selected-file" class="selected-file" style="display: none">
+                    <span class="file-text"></span>
+                    <span class="remove">×</span>
+                </div>
+                <div id="file-selector">
+                    <div class="file-search">
+                        <input type="text" id="file-search-input" placeholder="Search files..." />
+                    </div>
+                    <div class="file-list"></div>
+                </div>
+                <button class="file-button" id="add-files-btn">+ Add files</button>
             </div>
         </div>
         <script>
@@ -192,12 +279,74 @@ export function getWebviewContent(): string {
             const chatContainer = document.getElementById('chat-container');
             const promptInput = document.getElementById('prompt-input');
             const fileSelector = document.getElementById('file-selector');
-            const refreshFilesButton = document.getElementById('refresh-files');
+            const addFilesBtn = document.getElementById('add-files-btn');
+            const fileList = document.querySelector('.file-list');
+            const fileSearchInput = document.getElementById('file-search-input');
+            const selectedFileElement = document.getElementById('selected-file');
+            const selectedFileText = selectedFileElement.querySelector('.file-text');
+            let allFiles = [];
+            let selectedFile = null;
 
-            // Handle file refresh
-            refreshFilesButton.addEventListener('click', () => {
+            // Handle file selector button click
+            addFilesBtn.addEventListener('click', () => {
                 vscode.postMessage({ type: 'refreshFiles' });
+                fileSelector.style.display = 'block';
+                fileSearchInput.focus();
+                fileSearchInput.value = '';
+                document.addEventListener('click', handleClickOutside);
             });
+
+            function handleClickOutside(event) {
+                if (!fileSelector.contains(event.target) && event.target !== addFilesBtn) {
+                    fileSelector.style.display = 'none';
+                    document.removeEventListener('click', handleClickOutside);
+                }
+            }
+
+            fileSearchInput.addEventListener('input', () => {
+                const searchTerm = fileSearchInput.value.toLowerCase();
+                const filteredFiles = allFiles.filter(file => 
+                    file.toLowerCase().includes(searchTerm)
+                );
+                renderFileList(filteredFiles);
+            });
+
+            function updateFileList(files) {
+                allFiles = files;
+                renderFileList(files);
+            }
+
+            function renderFileList(files) {
+                fileList.innerHTML = '';
+                files.forEach(file => {
+                    const div = document.createElement('div');
+                    div.className = 'file-option';
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'file-name';
+                    const fileName = file.split('/').pop();
+                    nameSpan.textContent = fileName;
+                    
+                    const pathSpan = document.createElement('span');
+                    pathSpan.className = 'file-path';
+                    const filePath = file.substring(0, file.length - fileName.length);
+                    pathSpan.textContent = filePath;
+                    
+                    div.appendChild(nameSpan);
+                    div.appendChild(pathSpan);
+                    
+                    div.addEventListener('click', () => {
+                        selectedFile = file;
+                        selectedFileText.textContent = fileName;
+                        selectedFileElement.style.display = 'flex';
+                        promptInput.style.paddingTop = '32px';
+                        fileSelector.style.display = 'none';
+                        document.removeEventListener('click', handleClickOutside);
+                    });
+                    
+                    fileList.appendChild(div);
+                });
+            }
 
             // Handle messages from extension
             window.addEventListener('message', event => {
@@ -234,28 +383,23 @@ export function getWebviewContent(): string {
                 }
             });
 
-            function updateFileList(files) {
-                fileSelector.innerHTML = '<option value="">Select a file (optional)</option>';
-                files.forEach(file => {
-                    const option = document.createElement('option');
-                    option.value = file;
-                    option.textContent = file;
-                    fileSelector.appendChild(option);
-                });
-            }
+            selectedFileElement.querySelector('.remove').addEventListener('click', () => {
+                selectedFile = null;
+                selectedFileElement.style.display = 'none';
+                promptInput.style.paddingTop = '8px';
+            });
 
+            // Update the message sending to include selected file
             promptInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     const message = promptInput.value.trim();
-                    const selectedFile = fileSelector.value;
                     if (message) {
                         vscode.postMessage({
                             type: 'prompt',
                             content: message,
                             selectedFile: selectedFile
                         });
-                        addMessage(message, 'user');
                         promptInput.value = '';
                     }
                 }
